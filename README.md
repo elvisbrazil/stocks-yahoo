@@ -15,7 +15,7 @@
 instale os pacotes em requeriments.txt certifique-se de ter o python devidamente instalado
 ## 4. Como usar
 
-Com isso execute o app.py e digite a rota a seguir por exemplo, vale lembrar que as ações brasileiras precisa acrescentar .sa exemplo bbas3.sa
+Com isso execute o app.py e digite a rota a seguir por exemplo, por exemplo IRBR3 kkk
 
 ```sh
 http://localhost:5000/api/AAPL
