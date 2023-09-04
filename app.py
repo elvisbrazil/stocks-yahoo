@@ -9,6 +9,12 @@ translator = Translator()
 
 # Configuração do Flask-Caching
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})  # Use um cache simples em memória para fins de demonstração
+# Lista de ações brasileiras
+
+acoes_brasileiras = [
+    'PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3',
+    'WEGE3', 'BBAS3', 'MGLU3', 'SUZB3', '^BVSP', 'USDBRL=X'
+]
 
 # Importe a lista de ações brasileiras do arquivo brazilian_stocks.py
 from brazilian_stocks import brazilian_stocks
@@ -57,7 +63,7 @@ def index():
 
     stock_data = []
 
-    for symbol in brazilian_stocks:
+    for symbol in acoes_brasileiras:
         try:
             # Ajuste o símbolo
             adjusted_symbol = adjust_symbol(symbol)
