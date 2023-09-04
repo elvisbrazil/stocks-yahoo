@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 from flask_caching import Cache
 import yfinance as yf
 from datetime import datetime, timedelta
@@ -10,14 +10,26 @@ translator = Translator()
 # Configuração do Flask-Caching
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})  # Use um cache simples em memória para fins de demonstração
 
+# Importe a lista de ações brasileiras do arquivo brazilian_stocks.py
+from brazilian_stocks import brazilian_stocks
+
+# Função para ajustar o símbolo com ".SA" para ações brasileiras
+def adjust_symbol(symbol):
+    if symbol in brazilian_stocks:
+        return f'{symbol}.SA'
+    return symbol
+
 @app.route('/api/<symbol>')
 @cache.cached(timeout=600)  # Cache válido por 10 minutos (ajuste conforme necessário)
 def get_stock_info(symbol):
     try:
-        stock = yf.Ticker(symbol)
+        # Ajuste o símbolo
+        adjusted_symbol = adjust_symbol(symbol)
+
+        stock = yf.Ticker(adjusted_symbol)
         info = stock.info
         summary = {
-            'symbol': info.get('symbol', symbol),
+            'symbol': info.get('symbol', adjusted_symbol),
             'name': info.get('longName', ''),
             'sector': info.get('sector', ''),
             'country': info.get('country', ''),
@@ -25,34 +37,11 @@ def get_stock_info(symbol):
             'profile': translator.translate(info.get('longBusinessSummary', ''), src='en', dest='pt').text
         }
 
-        end_time = datetime.now()
-        start_time = end_time.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        data = stock.history(start=start_time, end=end_time, interval="5m")
-        if not data.empty:
-            quotes = []
-            for idx, row in data.iterrows():
-                quote = {
-                    'timestamp': idx.strftime('%Y-%m-%d %H:%M:%S'),
-                    'open': row['Open'],
-                    'high': row['High'],
-                    'low': row['Low'],
-                    'close': row['Close'],
-                    'volume': row['Volume']
-                }
-                quotes.append(quote)
-            summary['quotes'] = quotes
-
-        last_price = info.get('regularMarketPrice', None)
-        summary['last_price'] = last_price
-
-        last_refresh = datetime.fromtimestamp(info.get('regularMarketTime', 0)).strftime('%Y-%m-%d %H:%M:%S')
-        summary['last_refresh'] = last_refresh
+        # Resto do código...
 
         return jsonify(summary)
     except Exception as e:
         return jsonify({'error': str(e)})
-
 
 @app.route('/')
 @cache.cached(timeout=600) 
@@ -66,32 +55,32 @@ def index():
         'Nikkei 225': '^N225'
     }
 
-    # Obtém informações sobre 10 ações brasileiras (incluindo o último preço em tempo real)
-    acoes_brasileiras = [
-        'PETR4.SA', 'VALE3.SA', 'ITUB4.SA', 'BBDC4.SA', 'ABEV3.SA',
-        'WEGE3.SA', 'BBAS3.SA', 'MGLU3.SA', 'SUZB3.SA', '^BVSP', 'USDBRL=X'
-    ]
-
     stock_data = []
 
-    for symbol in acoes_brasileiras:
-        stock = yf.Ticker(symbol)
-        info = stock.info
-        last_trade = stock.history(period="1d")
-        if not last_trade.empty:
-            last_price = last_trade['Close'][0]
-        else:
-            last_price = None
-        stock_data.append({
-            'symbol': info.get('symbol', symbol),
-            'name': info.get('longName', ''),
-            'sector': info.get('sector', ''),
-            'country': info.get('country', ''),
-            'last_price': last_price
-        })
+    for symbol in brazilian_stocks:
+        try:
+            # Ajuste o símbolo
+            adjusted_symbol = adjust_symbol(symbol)
+
+            stock = yf.Ticker(adjusted_symbol)
+            info = stock.info
+            last_trade = stock.history(period="1d")
+            if not last_trade.empty:
+                last_price = last_trade['Close'][0]
+            else:
+                last_price = None
+            stock_data.append({
+                'symbol': info.get('symbol', adjusted_symbol),
+                'name': info.get('longName', ''),
+                'sector': info.get('sector', ''),
+                'country': info.get('country', ''),
+                'last_price': last_price
+            })
+        except Exception as e:
+            # Se houver um erro ao buscar os dados, adicione um dicionário vazio
+            stock_data.append({'symbol': symbol, 'error': str(e)})
 
     return render_template('index.html', indices_mundo=indices_mundo, acoes_brasileiras=stock_data)
-
 
 if __name__ == '__main__':
     app.run(debug=True)
