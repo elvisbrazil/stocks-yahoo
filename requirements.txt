@@ -8,6 +8,7 @@ beautifulsoup4==4.12.2
 blinker==1.6.2
 certifi==2023.7.22
 chardet==3.0.4
+flask-caching==1.4.0
 charset-normalizer==3.2.0
 click==8.1.7
 cssselect==1.2.0
