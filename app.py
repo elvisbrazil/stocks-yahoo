@@ -4,18 +4,23 @@ import yfinance as yf
 from datetime import datetime, timedelta
 from googletrans import Translator
 
-app = Flask(__name__)
-translator = Translator()
-
-# Configuração do Flask-Caching
-cache = Cache(app, config={'CACHE_TYPE': 'simple'})  # Use um cache simples em memória para fins de demonstração
-
 # Importe a lista de ações brasileiras do arquivo brazilian_stocks.py
 from brazilian_stocks import brazilian_stocks
 
+app = Flask(__name__)
+translator = Translator()
+# Configuração do Flask-Caching
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})  # Use um cache simples em memória para fins de demonstração
+
+# Lista de ações brasileiras
+acoes_brasileiras = [
+    'PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3',
+    'WEGE3', 'BBAS3', 'MGLU3', 'SUZB3', '^BVSP', 'USDBRL=X'
+]
+
 # Função para ajustar o símbolo com ".SA" para ações brasileiras
 def adjust_symbol(symbol):
-    if symbol in brazilian_stocks:
+    if symbol in acoes_brasileiras:
         return f'{symbol}.SA'
     return symbol
 
@@ -43,6 +48,7 @@ def get_stock_info(symbol):
     except Exception as e:
         return jsonify({'error': str(e)})
 
+
 @app.route('/')
 @cache.cached(timeout=600) 
 def index():
@@ -57,7 +63,7 @@ def index():
 
     stock_data = []
 
-    for symbol in brazilian_stocks:
+    for symbol in acoes_brasileiras:
         try:
             # Ajuste o símbolo
             adjusted_symbol = adjust_symbol(symbol)
@@ -81,6 +87,7 @@ def index():
             stock_data.append({'symbol': symbol, 'error': str(e)})
 
     return render_template('index.html', indices_mundo=indices_mundo, acoes_brasileiras=stock_data)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
