@@ -20,7 +20,8 @@ Com isso execute o app.py e digite a rota a seguir por exemplo, vale lembrar que
 ```sh
 http://localhost:5000/api/AAPL
 ```
-
+código de exemplo
+https://enthusiastic-frog-gaiters.cyclic.app/
 
 ## Autor
 
